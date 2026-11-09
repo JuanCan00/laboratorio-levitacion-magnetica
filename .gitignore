@@ -1,0 +1,7 @@
+# Dependencias de Node (los módulos ES necesarios para el navegador ya están en js/vendor/)
+node_modules/
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.agents/
+skills-lock.json

@@ -1,0 +1,15 @@
+{
+  "name": "laboratorio-levitacion-magnetica",
+  "version": "1.0.0",
+  "description": "Laboratorio Virtual de Levitación Magnética 3D (Levitron y Tren Maglev) con Three.js y GSAP",
+  "main": "js/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "npx serve .",
+    "test": "node tests/verify-lab.mjs"
+  },
+  "dependencies": {
+    "gsap": "^3.14.2",
+    "three": "^0.183.2"
+  }
+}

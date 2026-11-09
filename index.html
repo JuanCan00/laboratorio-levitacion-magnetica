@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LABORATORIO DE LEVITACIÓN MAGNÉTICA — Simulación Interactiva 3D</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <!-- Import Map con módulos locales en js/vendor/ para ejecución 100% autónoma -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./js/vendor/three.module.js",
+        "three/addons/controls/OrbitControls.js": "./js/vendor/OrbitControls.js",
+        "gsap": "./js/vendor/gsap-index.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- ========================================================================
+       ENCABEZADO PRINCIPAL DEL LABORATORIO
+       ======================================================================== -->
+  <header class="lab-header">
+    <div class="header-bar">
+      <div>
+        <div class="lab-eyebrow">
+          <span class="eyebrow-dot" aria-hidden="true"></span>
+          <span>Laboratorio Virtual de Electromagnetismo Aplicado · Three.js WebGL</span>
+        </div>
+        <h1 class="lab-title">LABORATORIO DE LEVITACIÓN MAGNÉTICA</h1>
+        <p class="lab-subtitle">
+          Explora, modifica y comprende los principios del electromagnetismo mediante simulaciones interactivas.
+        </p>
+      </div>
+
+      <div class="view-mode-switcher" role="group" aria-label="Modo de visualización de simuladores">
+        <button type="button" class="view-btn active" data-view-mode="dual">Vista Dual (A + B)</button>
+        <button type="button" class="view-btn" data-view-mode="levitron">1. Levitron</button>
+        <button type="button" class="view-btn" data-view-mode="maglev">2. Tren Maglev</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       SECCIÓN: EXPERIMENTOS PRECONFIGURADOS
+       ======================================================================== -->
+  <section class="presets-section" aria-label="Experimentos preconfigurados">
+    <div class="section-heading-row">
+      <h2 class="section-label">EXPERIMENTOS PRECONFIGURADOS</h2>
+      <span style="font-size: 0.78rem; color: var(--text-muted);">
+        Selecciona un escenario experimental base y modifica libremente sus parámetros
+      </span>
+    </div>
+
+    <div class="presets-grid">
+      <button type="button" class="preset-card" data-preset="low">
+        <span class="preset-tag">EXPERIMENTO 1</span>
+        <strong>Levitación con intensidad magnética baja</strong>
+        <span>Ferrita (0.34 T) en Levitron y 1.25 T / 300 A en Maglev: observa el régimen de <em>Fuerza Insuficiente</em> frente al peso.</span>
+      </button>
+
+      <button type="button" class="preset-card active" data-preset="medium">
+        <span class="preset-tag">EXPERIMENTO 2</span>
+        <strong>Levitación con intensidad magnética media</strong>
+        <span>Equilibrio dinámico estable: Samario-Cobalto (0.98 T) a 1850 RPM en Levitron y 3.60 T / 750 A a 12 cm en el Tren Maglev.</span>
+      </button>
+
+      <button type="button" class="preset-card" data-preset="high">
+        <span class="preset-tag">EXPERIMENTO 3</span>
+        <strong>Levitación con intensidad magnética alta</strong>
+        <span>Neodimio N52 (1.44 T) en Levitron y Superconductor NbTi (4.80 T / 950 A) soportando 6.400 kg a 265 km/h.</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       ÁREA PRINCIPAL DE TRABAJO: SIMULADORES 3D + CENTRO DE ANÁLISIS FÍSICO
+       ======================================================================== -->
+  <main class="lab-workspace">
+    <div class="simulators-column" id="simulators-Column">
+      <!-- ====================================================================
+           MÓDULO 1: SIMULADOR A — LEVITRON
+           ==================================================================== -->
+      <article class="simulator-module" id="module-levitron">
+        <header class="module-header">
+          <div>
+            <span class="module-badge">Módulo 01 · Simulador A (Dipolo Permanente + Estabilización Giroscópica)</span>
+            <h2>1. LEVITRON</h2>
+          </div>
+          <div class="module-status-wrap" aria-live="polite">
+            <span class="status-pill status-stable" id="badge-lev-status">ESTABLE</span>
+            <span class="status-reason-text" id="reason-lev-status">
+              Equilibrio dinámico con estabilización giroscópica activa.
+            </span>
+          </div>
+        </header>
+
+        <div class="module-body">
+          <!-- Escenario 3D del Levitron -->
+          <div class="scene-column">
+            <div class="viewport-3d-wrap">
+              <div class="viewport-3d" id="levitron-viewport" aria-label="Escena 3D interactiva del Levitron"></div>
+              <div class="viewport-overlay-legend" aria-hidden="true">
+                <span class="legend-chip"><i class="pole-dot pole-n"></i> Polo Norte (N)</span>
+                <span class="legend-chip"><i class="pole-dot pole-s"></i> Polo Sur (S)</span>
+                <span class="legend-chip"><i class="pole-dot vec-fg"></i> Vector Fg</span>
+                <span class="legend-chip"><i class="pole-dot vec-fmag"></i> Vector Fmag</span>
+              </div>
+              <div class="camera-hint">Arrastra para rotar · Rueda para zoom · Clic derecho para desplazar</div>
+            </div>
+
+            <!-- Botones de control de simulación del Levitron -->
+            <div class="sim-actions-bar">
+              <button type="button" class="btn-lab is-active" id="btn-lev-start">▶ INICIAR SIMULACIÓN</button>
+              <button type="button" class="btn-lab" id="btn-lev-pause">⏸ PAUSAR</button>
+              <button type="button" class="btn-lab" id="btn-lev-reset">↺ REINICIAR</button>
+              <button type="button" class="btn-lab is-active" id="btn-lev-field" aria-pressed="true">
+                ♒ MOSTRAR CAMPO MAGNÉTICO
+              </button>
+            </div>
+          </div>
+
+          <!-- Controles Interactivos y Telemetría del Levitron -->
+          <div class="controls-column">
+            <div class="sliders-grid">
+              <!-- Control 1: Radio del imán anular inferior (1.0 a 10.0 cm) -->
+              <div class="control-slider-card">
+                <div class="slider-label-row">
+                  <label for="lev-size">1. Radio del imán anular inferior (1.0–10.0 cm)</label>
+                  <span class="slider-live-val" id="val-lev-size">R = 5.0 cm (Ø 10 cm)</span>
+                </div>
+                <input type="range" id="lev-size" min="1" max="10" step="0.5" value="5" />
+              </div>
+
+              <!-- Control 2: Intensidad de campo magnético Br (0.00 a 1.50 T) -->
+              <div class="control-slider-card">
+                <div class="slider-label-row">
+                  <label for="lev-intensity">2. Campo magnético remanente Br (0.00–1.50 T)</label>
+                  <span class="slider-live-val" id="val-lev-intensity">0.98 T (Samario-Cobalto)</span>
+                </div>
+                <input type="range" id="lev-intensity" min="0" max="1.5" step="0.02" value="0.98" />
+              </div>
+
+              <!-- Control 3: Masa del objeto suspendido (1 a 100 g) -->
+              <div class="control-slider-card">
+                <div class="slider-label-row">
+                  <label for="lev-mass">3. Masa del objeto suspendido (1–100 g)</label>
+                  <span class="slider-live-val" id="val-lev-mass">28 g</span>
+                </div>
+                <input type="range" id="lev-mass" min="1" max="100" step="1" value="28" />
+              </div>
+
+              <!-- Control 4: Distancia inicial entre los imanes (1 a 20 cm) -->
+              <div class="control-slider-card">
+                <div class="slider-label-row">
+                  <label for="lev-distance">4. Distancia inicial entre imanes (1–20 cm)</label>
+                  <span class="slider-live-val" id="val-lev-distance">5.5 cm</span>
+                </div>
+                <input type="range" id="lev-distance" min="1" max="20" step="0.5" value="5.5" />
+              </div>
+
+              <!-- Control 5: Velocidad de rotación (0 a 3000 RPM) -->
+              <div class="control-slider-card">
+                <div class="slider-label-row">
+                  <label for="lev-rpm">5. Velocidad de rotación (0–3000 RPM)</label>
+                  <span class="slider-live-val" id="val-lev-rpm">1850 RPM</span>
+                </div>
+                <input type="range" id="lev-rpm" min="0" max="3000" step="50" value="1850" />
+              </div>
+            </div>
+
+            <!-- Indicadores Numéricos en Tiempo Real: Levitron -->
+            <div class="telemetry-readout-grid" aria-label="Indicadores en tiempo real del Levitron">
+              <div class="readout-cell">
+                <span>Masa del objeto</span>
+                <strong id="readout-lev-mass">28 g (0.028 kg)</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Campo magnético (Br)</span>
+                <strong id="readout-lev-intensity">0.98 T (Samario-Cobalto)</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Distancia inicial</span>
+                <strong id="readout-lev-distance">5.5 cm</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Velocidad rotación</span>
+                <strong id="readout-lev-rpm">1850 RPM (193.7 rad/s)</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Fuerza gravitacional</span>
+                <strong id="readout-lev-fg">0.275 N</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Fuerza magnética est.</span>
+                <strong id="readout-lev-fmag">0.275 N</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Altura del objeto</span>
+                <strong id="readout-lev-height">5.50 cm</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- ====================================================================
+           MÓDULO 2: SIMULADOR B — TREN MAGLEV
+           ==================================================================== -->
+      <article class="simulator-module" id="module-maglev">
+        <header class="module-header">
+          <div>
+            <span class="module-badge">Módulo 02 · Simulador B (Suspensión Electromagnética + Propulsión Lineal)</span>
+            <h2>2. TREN MAGLEV</h2>
+          </div>
+          <div class="module-status-wrap" aria-live="polite">
+            <span class="status-pill status-stable" id="badge-mag-status">ESTABLE</span>
+            <span class="status-reason-text" id="reason-mag-status">
+              Suspensión activa regulada en 12.0 cm con propulsión lineal desacoplada.
+            </span>
+          </div>
+        </header>
+
+        <div class="module-body">
+          <!-- Escenario 3D del Tren Maglev -->
+          <div class="scene-column">
+            <div class="viewport-3d-wrap">
+              <div class="viewport-3d" id="maglev-viewport" aria-label="Escena 3D interactiva del Tren Maglev"></div>
+              <div class="viewport-overlay-legend" aria-hidden="true">
+                <span class="legend-chip"><i class="pole-dot pole-n"></i> Polo N</span>
+                <span class="legend-chip"><i class="pole-dot pole-s"></i> Polo S</span>
+                <span class="legend-chip"><i class="pole-dot vec-fg"></i> Peso Fg</span>
+                <span class="legend-chip"><i class="pole-dot vec-fmag"></i> Suspensión Fem</span>
+                <span class="legend-chip"><i class="pole-dot vec-vel"></i> Velocidad v</span>
+              </div>
+              <div class="camera-hint">Arrastra para rotar · Rueda para zoom · Clic derecho para desplazar</div>
+            </div>
+
+            <!-- Botones de control de simulación del Tren Maglev -->
+            <div class="sim-actions-bar">
+              <button type="button" class="btn-lab is-active" id="btn-mag-start">▶ INICIAR SIMULACIÓN</button>
+              <button type="button" class="btn-lab" id="btn-mag-pause">⏸ PAUSAR</button>
+              <button type="button" class="btn-lab" id="btn-mag-reset">↺ REINICIAR</button>
+              <button type="button" class="btn-lab is-active" id="btn-mag-field" aria-pressed="true">
+                ♒ MOSTRAR CAMPO MAGNÉTICO
+              </button>
+            </div>
+          </div>
+
+          <!-- Controles Interactivos y Telemetría del Tren Maglev -->
+          <div class="controls-column">
+            <div class="sliders-grid">
+              <!-- Control 1: Masa del tren (100 a 10000 kg) -->
+              <div class="control-slider-card">
+                <div class="slider-label-row">
+                  <label for="mag-mass">1. Masa del tren (100–10000 kg)</label>
+                  <span class="slider-live-val" id="val-mag-mass">2.800 kg</span>
+                </div>
+                <input type="range" id="mag-mass" min="100" max="10000" step="100" value="2800" />
+              </div>
+
+              <!-- Control 2: Campo magnético de bogie (0.0 a 5.0 T) -->
+              <div class="control-slider-card">
+                <div class="slider-label-row">
+                  <label for="mag-intensity">2. Campo magnético en bogie B (0.0–5.0 T)</label>
+                  <span class="slider-live-val" id="val-mag-intensity">3.75 T</span>
+                </div>
+                <input type="range" id="mag-intensity" min="0" max="5" step="0.05" value="3.75" />
+              </div>
+
+              <!-- Control 3: Altura de levitación deseada (1 a 50 cm) -->
+              <div class="control-slider-card">
+                <div class="slider-label-row">
+                  <label for="mag-height">3. Altura de levitación deseada (1–50 cm)</label>
+                  <span class="slider-live-val" id="val-mag-height">12 cm</span>
+                </div>
+                <input type="range" id="mag-height" min="1" max="50" step="1" value="12" />
+              </div>
+
+              <!-- Control 4: Velocidad del tren (0 a 300 km/h) -->
+              <div class="control-slider-card">
+                <div class="slider-label-row">
+                  <label for="mag-speed">4. Velocidad del tren (0–300 km/h)</label>
+                  <span class="slider-live-val" id="val-mag-speed">160 km/h (44.4 m/s)</span>
+                </div>
+                <input type="range" id="mag-speed" min="0" max="300" step="5" value="160" />
+              </div>
+
+              <!-- Control 5: Intensidad de la corriente eléctrica (0 a 1000 A) -->
+              <div class="control-slider-card">
+                <div class="slider-label-row">
+                  <label for="mag-current">5. Corriente eléctrica en bobinas I (0–1000 A)</label>
+                  <span class="slider-live-val" id="val-mag-current">750 A</span>
+                </div>
+                <input type="range" id="mag-current" min="0" max="1000" step="10" value="750" />
+              </div>
+
+              <!-- Control 6: Separación entre electroimanes (10 a 100 cm) -->
+              <div class="control-slider-card">
+                <div class="slider-label-row">
+                  <label for="mag-spacing">6. Separación entre electroimanes (10–100 cm)</label>
+                  <span class="slider-live-val" id="val-mag-spacing">30 cm</span>
+                </div>
+                <input type="range" id="mag-spacing" min="10" max="100" step="5" value="30" />
+              </div>
+            </div>
+
+            <!-- Indicadores Numéricos en Tiempo Real: Tren Maglev -->
+            <div class="telemetry-readout-grid" aria-label="Indicadores en tiempo real del Tren Maglev">
+              <div class="readout-cell">
+                <span>Masa del tren</span>
+                <strong id="readout-mag-mass">2.800 kg</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Velocidad actual</span>
+                <strong id="readout-mag-speed">160.0 km/h (44.4 m/s)</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Altura de levitación</span>
+                <strong id="readout-mag-height">12.00 cm</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Campo magnético (B)</span>
+                <strong id="readout-mag-intensity">3.75 T</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Corriente eléctrica (I)</span>
+                <strong id="readout-mag-current">750 A</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Fuerza gravitacional</span>
+                <strong id="readout-mag-fg">27.47 kN</strong>
+              </div>
+              <div class="readout-cell">
+                <span>Fuerza electromagnética</span>
+                <strong id="readout-mag-fem">27.47 kN</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- ======================================================================
+         PANEL LATERAL: CENTRO DE ANÁLISIS FÍSICO
+         ====================================================================== -->
+    <aside class="physics-analysis-aside" aria-label="Centro de Análisis Físico">
+      <div class="aside-header">
+        <span class="module-badge">Telemetría Vectorial y Ecuaciones del Modelo</span>
+        <h2>CENTRO DE ANÁLISIS FÍSICO</h2>
+      </div>
+
+      <div class="analysis-tabs" role="tablist" aria-label="Selector de simulador en análisis">
+        <button type="button" class="analysis-tab-btn active" data-analysis-tab="levitron" role="tab" aria-selected="true">
+          Analizar Levitron
+        </button>
+        <button type="button" class="analysis-tab-btn" data-analysis-tab="maglev" role="tab" aria-selected="false">
+          Analizar Tren Maglev
+        </button>
+      </div>
+
+      <p class="analysis-active-caption" id="analysis-active-sim">
+        Simulador A: Levitron (Estabilización Giroscópica)
+      </p>
+
+      <!-- Ecuación 1: Fuerza Gravitacional -->
+      <div class="equation-card">
+        <span class="eq-title">1. Fuerza Gravitacional (Ley Universal Local)</span>
+        <div class="eq-math">F<sub>g</sub> = m × g &nbsp;&nbsp;(g = 9.81 m/s²)</div>
+        <div class="eq-live" id="analysis-fg-live">
+          F<sub>g</sub> = 0.028 kg × 9.81 m/s² = <strong>0.275 N</strong>
+        </div>
+      </div>
+
+      <!-- Ecuación 2: Fuerza Magnética Estimada -->
+      <div class="equation-card eq-violet">
+        <span class="eq-title">2. Fuerza Magnética / Electromagnética Estimada</span>
+        <div class="eq-live" id="analysis-fmag-live">
+          F<sub>mag</sub> ≈ <strong>0.275 N</strong>
+        </div>
+        <div class="eq-live" id="analysis-fnet-live">
+          ΣF<sub>z</sub> = F<sub>mag</sub> − F<sub>g</sub> = <strong>0.000 N</strong>
+        </div>
+      </div>
+
+      <!-- Diagrama Vectorial en Tiempo Real -->
+      <div class="vector-diagram-box">
+        <span class="eq-title" style="align-self: flex-start; margin-bottom: 0.2rem;">
+          Diagrama de Cuerpo Libre Dinámico
+        </span>
+        <svg viewBox="0 0 260 210" class="vector-svg" aria-label="Diagrama vectorial de fuerzas en tiempo real">
+          <defs>
+            <marker id="arrow-fg" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b" />
+            </marker>
+            <marker id="arrow-fmag" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#06b6d4" />
+            </marker>
+            <marker id="arrow-vel" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#a855f7" />
+            </marker>
+          </defs>
+
+          <!-- Ejes de referencia -->
+          <line x1="20" y1="105" x2="240" y2="105" stroke="rgba(148,163,184,0.18)" stroke-dasharray="3 3" />
+          <line x1="130" y1="15" x2="130" y2="195" stroke="rgba(148,163,184,0.18)" stroke-dasharray="3 3" />
+
+          <!-- Vector Velocidad / Rotación -->
+          <g id="svg-vec-vel-group">
+            <line id="svg-vec-vel-line" x1="130" y1="105" x2="185" y2="105" stroke="#a855f7" stroke-width="3" marker-end="url(#arrow-vel)" />
+            <text id="svg-vec-vel-label" x="165" y="94" fill="#d8b4fe" font-size="10" font-family="monospace">ω = 1850 RPM</text>
+          </g>
+
+          <!-- Vector Fuerza Gravitacional Fg (hacia abajo) -->
+          <line id="svg-vec-fg-line" x1="130" y1="105" x2="130" y2="160" stroke="#f59e0b" stroke-width="3.2" marker-end="url(#arrow-fg)" />
+          <text id="svg-vec-fg-label" x="140" y="158" fill="#fcd34d" font-size="10.5" font-weight="bold" font-family="monospace">Fg (0.28 N)</text>
+
+          <!-- Vector Fuerza Magnética Fmag / Fem (hacia arriba) -->
+          <line id="svg-vec-fmag-line" x1="130" y1="105" x2="130" y2="50" stroke="#06b6d4" stroke-width="3.2" marker-end="url(#arrow-fmag)" />
+          <text id="svg-vec-fmag-label" x="140" y="52" fill="#67e8f9" font-size="10.5" font-weight="bold" font-family="monospace">Fmag (0.28 N)</text>
+
+          <!-- Cuerpo suspendido en el origen del DCL -->
+          <g id="svg-vector-body">
+            <rect x="114" y="99" width="32" height="12" rx="4" fill="#1e293b" stroke="#38bdf8" stroke-width="2" />
+            <circle cx="130" cy="105" r="3.5" fill="#f8fafc" />
+          </g>
+        </svg>
+      </div>
+
+      <!-- Diagnóstico en vivo -->
+      <div class="diagnostic-callout" id="analysis-diagnostic-text" aria-live="polite">
+        [ESTABLE] Equilibrio dinámico con estabilización giroscópica activa.
+      </div>
+
+      <!-- Nota de rigor científico sobre modelos y supuestos -->
+      <div class="analysis-note-box" id="analysis-model-note">
+        <strong>Nota sobre el modelo matemático:</strong> Las expresiones de fuerza magnética empleadas son modelos fenomenológicos educativos de eje axial (aproximación dipolo-anillo y entrehierro regulado) y no sustituyen la integración tridimensional completa del tensor de tensiones de Maxwell.
+      </div>
+    </aside>
+  </main>
+
+  <footer class="lab-footer">
+    LABORATORIO VIRTUAL DE LEVITACIÓN MAGNÉTICA · Visualización Científica 3D con Three.js, GSAP y Motores Físicos Interactivos en Tiempo Real.
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
+
